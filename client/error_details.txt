@@ -1,0 +1,7 @@
+Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+
+Error: [404 Not Found] models/gemini-1.5-flash is not found for API version v1, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at makeRequest (file:///C:/Users/pardh/.gemini/antigravity/scratch/snap-and-fix/client/node_modules/@google/generative-ai/dist/index.mjs:210:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async generateContent (file:///C:/Users/pardh/.gemini/antigravity/scratch/snap-and-fix/client/node_modules/@google/generative-ai/dist/index.mjs:534:22)
+    at async test (file:///C:/Users/pardh/.gemini/antigravity/scratch/snap-and-fix/client/test-key.js:11:24)
