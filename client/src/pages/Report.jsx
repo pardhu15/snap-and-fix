@@ -55,32 +55,31 @@ export default function Report() {
     // State for manual overrides
     const [category, setCategory] = useState("");
     const [description, setDescription] = useState("");
+    const [isInvalid, setIsInvalid] = useState(false);
 
     const handleAnalyze = async (base64Image) => {
         setAnalyzing(true);
+        setIsInvalid(false);
         try {
-            // Mock Mode Check for Analysis too
-            const apiKey = import.meta.env.VITE_FIREBASE_API_KEY;
-            if (!apiKey || apiKey.includes('your_api_key')) {
-                await new Promise(r => setTimeout(r, 2000));
-                const mockResult = { type: "Pothole", severity: "Medium", description: "Simulated AI: Large pothole detected on road surface." };
-                setAnalysis(mockResult);
-                setCategory(mockResult.type);
-                setDescription(mockResult.description);
-                return;
-            }
-
             const res = await fetch(base64Image);
             const blob = await res.blob();
             const file = new File([blob], "capture.jpg", { type: "image/jpeg" });
             const result = await analyzeImage(file);
+
+            // Check if AI determined image is invalid
+            if (result.valid === false) {
+                setAnalysis(result);
+                setIsInvalid(true);
+                return;
+            }
+
             setAnalysis(result);
-            setCategory(result.type);
+            setCategory(result.type || "Other");
             setDescription(result.description);
         } catch (err) {
             console.error("Analysis failed", err);
             // Fallback mock
-            const fallback = { type: "Other", severity: "Low", description: "Could not analyze image. Please describe." };
+            const fallback = { valid: true, type: "Other", severity: "Low", description: "Could not analyze image. Please describe." };
             setAnalysis(fallback);
             setCategory(fallback.type);
             setDescription(fallback.description);
@@ -247,7 +246,25 @@ export default function Report() {
                 </div>
 
                 {/* Analysis Results / Form */}
-                {analysis && !analyzing && (
+                {isInvalid && (
+                    <div className="p-8 text-center animate-fade-in-up">
+                        <div className="bg-red-50 text-red-500 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
+                            <AlertCircle size={40} />
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-800 mb-2">Not a Civic Issue</h3>
+                        <p className="text-gray-500 mb-6 px-4 leading-relaxed">
+                            {analysis?.description || "This image does not appear to be a relevant civic issue. Please strictly upload photos of infrastructure problems."}
+                        </p>
+                        <button
+                            onClick={() => { setImgSrc(null); setAnalysis(null); setIsInvalid(false); }}
+                            className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-3 px-8 rounded-xl transition"
+                        >
+                            Try Again
+                        </button>
+                    </div>
+                )}
+
+                {analysis && !analyzing && !isInvalid && (
                     <div className="p-6 animate-fade-in-up space-y-4">
 
                         {/* Type Selection */}

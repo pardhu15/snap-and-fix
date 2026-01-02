@@ -16,12 +16,19 @@ export async function analyzeImage(file) {
 
         const base64Data = await fileToGenerativePart(file);
         const prompt = `
-      Analyze this image for civic issues like potholes, garbage piles, broken streetlights, or other infrastructure problems.
+      Analyze this image. Determine if it depicts a real-world civic issue in a public area (e.g., pothole, garbage, broken streetlight, graffiti, damaged signage).
+      
       Return a STRICT JSON object (no markdown) with the following fields:
       {
-        "type": "Pothole" | "Garbage" | "Streetlight" | "Other" | "None",
-        "severity": "Low" | "Medium" | "High",
-        "description": "A very short description (max 10 words)."
+        "valid": boolean, // Set to true ONLY if it is a valid, real-world civic issue.
+                          // Set to FALSE for: 
+                          // - Selfies, faces, body parts (hands/legs).
+                          // - Pets, indoor objects.
+                          // - SCREENSHOTS, PHOTOS OF SCREENS, MONITORS, or PHONES.
+                          // - Images showing device bezels, pixels, or moiré patterns.
+        "type": "Pothole" | "Garbage" | "Streetlight" | "Graffiti" | "Signage" | "Other" | null,
+        "severity": "Low" | "Medium" | "High" | null,
+        "description": "A very short description (max 10 words) of the issue, or why it is invalid."
       }
     `;
 
@@ -35,7 +42,14 @@ export async function analyzeImage(file) {
 
     } catch (error) {
         console.error("Gemini Error:", error);
-        return mockResponse();
+        // If we have a key but it failed, return an error state instead of a random mock
+        // This prevents "random potholes" from appearing when the API is down/invalid.
+        return {
+            valid: false,
+            type: "Error",
+            severity: "Low",
+            description: "AI Service Error. Check API Key or Quota."
+        };
     }
 }
 
@@ -56,11 +70,26 @@ async function fileToGenerativePart(file) {
 }
 
 function mockResponse() {
-    const types = ["Pothole", "Garbage", "Streetlight"];
+    // Simulate a 30% chance of the image being invalid in demo mode
+    const isInvalid = Math.random() < 0.3;
+
+    if (isInvalid) {
+        return {
+            valid: false,
+            type: null,
+            severity: null,
+            description: "Simulated AI: Image detected as invalid (Demo Mode)."
+        };
+    }
+
+    const types = ["Pothole", "Garbage", "Streetlight", "Graffiti", "Signage"];
     const severities = ["Low", "Medium", "High"];
+    const randomType = types[Math.floor(Math.random() * types.length)];
+
     return {
-        type: types[Math.floor(Math.random() * types.length)],
+        valid: true,
+        type: randomType,
         severity: severities[Math.floor(Math.random() * severities.length)],
-        description: "Simulated AI analysis result for demo purpose."
+        description: `Simulated AI: Detected ${randomType.toLowerCase()} in the area.`
     };
 }
